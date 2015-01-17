@@ -1,3 +1,5 @@
 # Distribution / packaging
 out/
 *.pyc
+cookies.txt
+*.tmp
