@@ -19,7 +19,11 @@ def download_all(song_list, base, cur, size):
     for l in song_list:
         sname = l[0] + '.mp3'
         url = l[1]
-        if os.path.isfile(c_dir + sname):
+        # 约定'zzz': url为空
+        if url == 'zzz':
+            print '歌曲%s已下架' % sname
+            continue
+        elif os.path.isfile(c_dir + sname):
             print u'%s已下载' % sname
             continue
         print(u'正在下载%s' % sname)
