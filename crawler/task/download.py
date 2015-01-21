@@ -21,7 +21,7 @@ def download_all(song_list, base, cur, size):
         url = l[1]
         # 约定'zzz': url为空
         if url == 'zzz':
-            print '歌曲%s已下架' % sname
+            print u'歌曲%s已下架' % sname
             continue
         elif os.path.isfile(c_dir + sname):
             print u'%s已下载' % sname

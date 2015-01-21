@@ -1,5 +1,7 @@
 # Distribution / packaging
 out/
+.idea/
+.ropeproject/
 *.pyc
 cookies.txt
 *.tmp
