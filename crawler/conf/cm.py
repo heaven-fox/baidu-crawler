@@ -1,4 +1,4 @@
-# coding: UTF-8
+# coding: utf8
 
 
 class ConfigManager:
@@ -34,7 +34,7 @@ class ConfigManager:
                     "path": "out/"
                 },
                 "target": {
-                    "authors": {"张国荣", "邓紫棋" ,"陈慧娴", "刘若英", "姚贝娜"}
+                    "authors": {"刘若英", "张国荣", "陈慧娴"}
                 }
             }
         }

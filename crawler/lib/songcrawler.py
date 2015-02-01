@@ -51,7 +51,7 @@ class Crawler():
                 curl.close()
                 body = buffers.getvalue()
                 soup = BeautifulSoup(body)
-                song_lists = self.serialization.json_to_data(soup.html.body.p.text)['data']['songList']
+                song_lists = self.serialization.json_to_data(soup.text)['data']['songList']
                 soup.decompose()
                 counter = 0
                 # step 4: 封装歌曲信息
