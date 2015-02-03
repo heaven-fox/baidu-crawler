@@ -6,3 +6,4 @@ out/
 cookies.txt
 *.tmp
 *.rdb
+*.dump
