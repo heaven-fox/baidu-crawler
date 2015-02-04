@@ -2,6 +2,7 @@
 
 import pycurl
 from StringIO import StringIO
+import bs4
 from bs4 import BeautifulSoup
 from crawler.tool.dataserialization import DataSerialization
 from crawler.conf.cm import ConfigManager
@@ -10,14 +11,22 @@ import redis
 import re
 pattern = re.compile(r'\\')
 
+# 伪装客户端
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0) Gecko/20100101 Firefox/34.0"
+
 
 class Crawler():
     def __init__(self):
         self.serialization = DataSerialization()
         self.cm = ConfigManager()
 
-    # 按页获取歌曲信息
     def run(self, author):
+        """
+        接受author参数, 获取其在百度音乐上收录的所有歌曲, 按照['sid', 'author', 'sname', 'download_counts']元组形式
+        压入redis数据库, 由后台的task程序处理
+        :param author: 歌手名
+        :return:
+        """
         s_total, s_size = PageDetector.detect(author)
         queue_data = self.cm.get_config('taskqueue')['data']
         r = redis.Redis(
@@ -44,8 +53,7 @@ class Crawler():
                 curl = pycurl.Curl()
                 buffers = StringIO()
                 curl.setopt(curl.URL, download_url)
-                curl.setopt(curl.USERAGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0)"
-                                            " Gecko/20100101 Firefox/34.0")
+                curl.setopt(curl.USERAGENT, user_agent)
                 curl.setopt(curl.WRITEDATA, buffers)
                 curl.perform()
                 curl.close()
@@ -76,11 +84,13 @@ class Crawler():
             # step 1: 搜索歌手, 获取歌曲id
             buffers = StringIO()
             curl = pycurl.Curl()
-            tmp_url = 'http://music.baidu.com/search/song?s=1&key=%s&start=%d&size=%d' % (author, start, s_size)
+            # 伪造来源
+            refer_url = 'http://music.baidu.com/search?key=%s' % author
+            search_url = 'http://music.baidu.com/search/song?s=1&key=%s&start=%d&size=%d' % (author, start, s_size)
             # print tmp_url
-            curl.setopt(curl.URL, tmp_url)
-            curl.setopt(curl.USERAGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0)"
-                                        " Gecko/20100101 Firefox/34.0")
+            curl.setopt(curl.URL, search_url)
+            curl.setopt(curl.USERAGENT, user_agent)
+            curl.setopt(pycurl.REFERER, refer_url)
             curl.setopt(curl.WRITEDATA, buffers)
             curl.perform()
             curl.close()
@@ -103,3 +113,43 @@ class Crawler():
                 sids += str(sid) + ','
                 sname = tag.find('div', {'class': 'song-item'}).find('span', {'class': 'song-title'}).find('a').text
                 list1.append([sid, author, sname, 1])
+
+    def get_url_by_sname(self, sname, author=None):
+        """
+        接受歌曲名作为参数, 搜索其对应的列表, 这里做个处理, 只是抽取列表第1页的数据, 后面的数据参考性不是很大
+        :param sname: 歌曲名
+        :param author: 歌手名, 仅当用户定点查询歌手的某首歌时, 才开启该选项; 默认None
+        :return:
+        """
+        search_url = 'http://music.baidu.com/search?key=%s' % sname
+        refer_url = 'http://music.baidu.com/'
+        buffers = StringIO()
+        curl = pycurl.Curl()
+        curl.setopt(pycurl.URL, search_url)
+        curl.setopt(pycurl.REFERER, refer_url)
+        curl.setopt(pycurl.USERAGENT, user_agent)
+        curl.setopt(pycurl.WRITEDATA, buffers)
+        curl.perform()
+        curl.close()
+
+        body = buffers.getvalue()
+        soup = BeautifulSoup(body)
+
+        content = soup.find('div', {'id': 'result_container'}).find('ul')
+        soup.decompose()
+        song_list = []
+        sids = '{'
+        for tag in content:
+            # 删除注释行
+            if isinstance(tag, bs4.element.Comment):
+                continue
+            item = self.serialization.json_to_data(tag.get('data-songitem'))['songItem']
+            sid = item['sid']
+            author = item['author']
+            sids += str(sid) + ','
+            song_list.append([sid, author, sname, 1])
+        sids += '}'
+        print(sids)
+
+if __name__ == '__main__':
+    Crawler().get_url_by_sname('当爱已成往事')
