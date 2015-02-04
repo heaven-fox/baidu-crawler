@@ -149,7 +149,40 @@ class Crawler():
             sids += str(sid) + ','
             song_list.append([sid, author, sname, 1])
         sids += '}'
-        print(sids)
+        urls = self.get_url_by_sid(sids)
+        counter = 0
+        for item in song_list:
+            item.append(urls[counter])
+            counter += 1
+        print(song_list)
+        # @ TODO 歌曲链接处理
 
-if __name__ == '__main__':
-    Crawler().get_url_by_sname('当爱已成往事')
+    def get_url_by_sid(self, sids):
+        """
+        接受歌曲id构成的字符串
+        :param sids: 歌曲id串
+        :return: 歌曲真实下载url
+        """
+        search_url = 'http://play.baidu.com/data/music/songlink?songIds=%s' % sids
+        buffers = StringIO()
+        curl = pycurl.Curl()
+        curl.setopt(pycurl.URL, search_url)
+        curl.setopt(pycurl.USERAGENT, user_agent)
+        curl.setopt(pycurl.WRITEDATA, buffers)
+        curl.perform()
+        curl.close()
+
+        body = buffers.getvalue()
+        soup = BeautifulSoup(body)
+
+        song_lists = self.serialization.json_to_data(soup.text)['data']['songList']
+        soup.decompose()
+        urls = []
+        for l in song_lists:
+            link = l['songLink']
+            if not link:
+                url = 'zzz'
+            else:
+                url = pattern.sub('', link)
+            urls.append(url)
+        return urls
