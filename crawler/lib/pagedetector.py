@@ -4,9 +4,10 @@ import pycurl
 from StringIO import StringIO
 from bs4 import BeautifulSoup
 import re
-page_pattern = re.compile('page-navigator-hook*')
+page_pattern = re.compile('page-navigator-hook.*')
 digit_pattern = re.compile(r'\D')
-
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0)Gecko/20100101 Firefox/34.0"
+refer_url = 'http://music.baidu.com/'
 
 class PageDetector():
     def __init__(self):
@@ -19,16 +20,13 @@ class PageDetector():
         buffers = StringIO()
         curl = pycurl.Curl()
         curl.setopt(curl.URL, 'http://music.baidu.com/search/song?key=%s&s=1' % author)
-        curl.setopt(curl.USERAGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0)"
-                                    " Gecko/20100101 Firefox/34.0")
+        curl.setopt(pycurl.REFERER, refer_url)
+        curl.setopt(curl.USERAGENT, user_agent)
         curl.setopt(curl.WRITEDATA, buffers)
         curl.perform()
         curl.close()
         body = buffers.getvalue()
         soup = BeautifulSoup(body)
-        # 返回一个list
-        content = soup.find('div', {'class': 'search-song-list song-list song-list-hook'}).findAll\
-            ('li', {'class': 'bb-dotimg clearfix song-item-hook  '})
         page_ori = soup.find('div', {'class': page_pattern})['class']
         soup.decompose()
         # 获取总歌曲数, 每页显示歌曲数

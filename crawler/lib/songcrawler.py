@@ -20,7 +20,7 @@ class Crawler():
         self.serialization = DataSerialization()
         self.cm = ConfigManager()
 
-    def run(self, author):
+    def get_url_by_singer(self, author):
         """
         接受author参数, 获取其在百度音乐上收录的所有歌曲, 按照['sid', 'author', 'sname', 'download_counts']元组形式
         压入redis数据库, 由后台的task程序处理
@@ -154,8 +154,18 @@ class Crawler():
         for item in song_list:
             item.append(urls[counter])
             counter += 1
-        print(song_list)
-        # @ TODO 歌曲链接处理
+        queue_data = self.cm.get_config('taskqueue')['data']
+        r = redis.Redis(
+            host=self.cm.get_config('redis')['host'],
+            port=self.cm.get_config('redis')['port']
+        )
+        try:
+            print 'Redis服务正常'
+            print('开始提交数据')
+            r.lpush(queue_data, song_list)
+            print('数据压入redis完毕')
+        except Exception:
+            print 'Redis服务未启动'
 
     def get_url_by_sid(self, sids):
         """

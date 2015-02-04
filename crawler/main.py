@@ -11,10 +11,13 @@ cm = ConfigManager()
 if __name__ == '__main__':
     setup.setup_env()
     clean.cleanup()
-    targets = cm.get_config('target')['authors']
-    for author in targets:
-        tmp = author.decode('utf-8')
-        print u'开始下载%s的歌曲' % tmp
-        Crawler().run(author)
-        DataProcedure().run()
-        Baidu().searchBySinger(tmp)
+    # targets = cm.get_config('target')['authors']
+    # for author in targets:
+    #     tmp = author.decode('utf-8')
+    #     print u'开始下载%s的歌曲' % tmp
+    #     Crawler().get_url_by_singer(author)
+    #     DataProcedure().run()
+    #     Baidu().searchBySinger(tmp)
+    # 测试get_url_by_sname功能
+    Crawler().get_url_by_sname('当爱已成往事')
+    DataProcedure().run()
