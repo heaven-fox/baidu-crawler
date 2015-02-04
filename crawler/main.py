@@ -21,3 +21,4 @@ if __name__ == '__main__':
     # 测试get_url_by_sname功能
     Crawler().get_url_by_sname('当爱已成往事')
     DataProcedure().run()
+    Baidu().searchBySname(u'当爱已成往事')

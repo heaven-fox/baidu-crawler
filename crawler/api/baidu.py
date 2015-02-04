@@ -29,7 +29,7 @@ class Baidu():
         choice = raw_input()
         if choice == 'y':
             base_dir = self.cm.get_config('dir')['path']
-            download.download_all(data, base_dir, author, size)
+            download.download_with_singer(data, base_dir, author, size)
         else:
             print '已取消下载'
 
@@ -52,6 +52,6 @@ class Baidu():
         choice = raw_input()
         if choice == 'y':
             base_dir = self.cm.get_config('dir')['path']
-            download.download_all(data, base_dir, sname, size)
+            download.download_with_sname(sname, data, base_dir)
         else:
             print '已取消下载'
